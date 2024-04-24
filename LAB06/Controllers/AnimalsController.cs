@@ -17,29 +17,6 @@ namespace LAB06.Controllers
             _configuration = configuration;
         }
 
-        [HttpGet]
-        public IActionResult GetAllAnimals()
-        {
-            var response = new List<GetAnimalsResponse>();
-            using (var sqlConnection = new SqlConnection(_configuration.GetConnectionString("Default")))
-            {
-                var sqlCommand = new SqlCommand("SELECT * FROM animal", sqlConnection);
-                sqlCommand.Connection.Open();
-
-                var reader = sqlCommand.ExecuteReader();
-                while (reader.Read())
-                {
-                    response.Add(new GetAnimalsResponse(
-                        reader.GetInt32(0),
-                        reader.GetString(1),
-                        reader.GetString(2),
-                        reader.GetString(3),
-                        reader.GetString(4)
-                    ));
-                }
-            }
-            return Ok(response);
-        }
 
         [HttpPost]
         public IActionResult CreateAnimal(CreateAnimalRequest request)
@@ -60,6 +37,37 @@ namespace LAB06.Controllers
 
                 return Created($"api/animals/{id}", new CreateAnimalResponse((int)id, request));
             }
+        }
+
+        [HttpGet]
+        public IActionResult GetAnimals([FromQuery] string orderBy = "name")
+        {
+            var allowedSortColumns = new List<string> { "name", "description", "category", "area" };
+            if (!allowedSortColumns.Contains(orderBy.ToLower()))
+            {
+                return BadRequest($"Invalid parameter string: {allowedSortColumns.ElementAt(0)}, {allowedSortColumns.ElementAt(1)}, {allowedSortColumns.ElementAt(2)}, {allowedSortColumns.ElementAt(3)}.");
+            }
+
+            var response = new List<GetAnimalsResponse>();
+            using (var sqlConnection = new SqlConnection(_configuration.GetConnectionString("Default")))
+            {
+                var sqlCommand = new SqlCommand($"SELECT * FROM animal ORDER BY {orderBy} ASC", sqlConnection);
+                sqlCommand.Connection.Open();
+
+                var reader = sqlCommand.ExecuteReader();
+                while (reader.Read())
+                {
+                    response.Add(new GetAnimalsResponse(
+                        reader.GetInt32(0),
+                        reader.GetString(1),
+                        reader.GetString(2),
+                        reader.GetString(3),
+                        reader.GetString(4)
+                    ));
+                }
+            }
+
+            return Ok(response);
         }
 
         [HttpPut("{id}")]
