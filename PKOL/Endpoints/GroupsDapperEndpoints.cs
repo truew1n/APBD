@@ -31,7 +31,7 @@ namespace PKOL.Endpoints
 
                 if (!reader.HasRows) return Results.NotFound($"Group with id:{id} does not exits");
 
-                reader.Read();
+                await reader.ReadAsync();
 
                 GetGroupDTO result = new GetGroupDTO(
                         reader.GetInt32(0),
